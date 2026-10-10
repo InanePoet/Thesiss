@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Thesiss</string>
+    <string name="title_activity_main">Thesiss</string>
+    <string name="package_name">app.thesiss</string>
+    <string name="custom_url_scheme">app.thesiss</string>
+</resources>
