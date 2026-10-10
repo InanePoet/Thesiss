@@ -64,6 +64,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           NOTES: ${{ github.event.head_commit.message || 'Build manuale' }}
         run: |
+          gh release delete bootstrap --yes --cleanup-tag || true
           if [ "$SIGNED" = "1" ]; then
             gh release create "v$APP_VERSION" app.apk --title "v$APP_VERSION" --notes "$NOTES" --latest
           else
