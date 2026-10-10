@@ -1,0 +1,16 @@
+node_modules/
+dist/
+*.jks
+*.p12
+*.keystore
+.env
+.env.*
+CLAUDE.md
+.claude/
+probes/
+*.tgz
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/app/src/main/assets/public/

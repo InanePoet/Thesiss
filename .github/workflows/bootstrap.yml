@@ -1,0 +1,60 @@
+name: Bootstrap dipendenze
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [".github/workflows/bootstrap.yml"]
+permissions:
+  contents: write
+jobs:
+  deps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Installa dipendenze (ultime versioni)
+        run: |
+          npm install --save \
+            react@latest react-dom@latest \
+            @tiptap/react@latest @tiptap/pm@latest @tiptap/core@latest @tiptap/starter-kit@latest @tiptap/extensions@latest \
+            idb@latest mammoth@latest docx@latest pdfjs-dist@latest d3-force@latest \
+            @fontsource/literata@latest @fontsource-variable/inter@latest \
+            @capacitor/core@latest @capacitor/android@latest @capacitor/filesystem@latest @capacitor/share@latest @capacitor/app@latest
+          npm install --save-dev \
+            vite@latest @vitejs/plugin-react@latest typescript@latest \
+            @types/react@latest @types/react-dom@latest @types/d3-force@latest @types/node@latest \
+            @capacitor/cli@latest
+      - name: Genera progetto Android
+        run: |
+          mkdir -p dist
+          [ -f dist/index.html ] || echo '<!doctype html><title>x</title>' > dist/index.html
+          [ -d android ] || npx cap add android
+      - name: Campioni API
+        continue-on-error: true
+        run: |
+          mkdir -p probes
+          curl -sL "https://api.openalex.org/works?search=japan%20intelligence%20agency&per-page=2" -o probes/openalex.json
+          curl -sL "https://api.crossref.org/works?query=japan%20intelligence&rows=2" -o probes/crossref.json
+          curl -sL "https://api.semanticscholar.org/graph/v1/paper/search?query=japan%20intelligence&limit=2&fields=title,authors,year,venue,abstract,externalIds,url,openAccessPdf,citationCount" -o probes/s2.json
+          curl -sL "https://api.jstage.jst.go.jp/searchapi/do?service=3&keyword=%E6%83%85%E5%A0%B1%E6%A9%9F%E9%96%A2&count=2" -o probes/jstage.xml
+          curl -sL "https://cir.nii.ac.jp/opensearch/articles?q=%E6%83%85%E5%A0%B1%E6%A9%9F%E9%96%A2&count=2&format=json" -o probes/cinii.json
+          curl -sL "https://api.languagetool.org/v2/check" -d "language=it" --data-urlencode "text=Questo e un testo con un erore." -o probes/languagetool.json
+          ls -la probes
+      - name: Commit lockfile e android
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json android
+          git commit -m "Dipendenze e progetto Android" || echo "niente da committare"
+          git push
+      - name: Pacchetto dipendenze come release temporanea
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tar czf node_modules.tgz node_modules
+          tar czf probes.tgz probes
+          gh release delete bootstrap --yes --cleanup-tag || true
+          gh release create bootstrap node_modules.tgz probes.tgz --prerelease --title "bootstrap (temporanea)" --notes "Pacchetto tecnico temporaneo, verrà cancellato."
