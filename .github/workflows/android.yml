@@ -58,6 +58,7 @@ jobs:
         with:
           name: apk
           path: app.apk
+          retention-days: 3
       - name: Pubblica release
         if: github.ref == 'refs/heads/main'
         env:
